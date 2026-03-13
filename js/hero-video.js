@@ -38,6 +38,7 @@
   let allLoaded = false;
   let currentFrameIndex = 0;
   let rafPending = false;
+  let loadTimeoutId = null;
 
   // Lock scroll while loading
   document.body.style.overflow = 'hidden';
@@ -49,6 +50,8 @@
   }
 
   function onAllLoaded() {
+    if (allLoaded) return;
+    if (loadTimeoutId) { clearTimeout(loadTimeoutId); loadTimeoutId = null; }
     allLoaded = true;
     drawFrame(0);
 
@@ -77,6 +80,10 @@
     img.src = FRAME_DIR + 'frame_' + String(i).padStart(4, '0') + '.jpg';
     images[idx] = img;
   }
+
+  // Fallback: dismiss loader after 15 s regardless of image load state.
+  // This prevents the site from hanging if frames are slow or unavailable.
+  loadTimeoutId = setTimeout(() => { onAllLoaded(); }, 15000);
 
   // ── Draw a Frame (cover-fit) ───────────────────────
   function drawFrame(index) {
