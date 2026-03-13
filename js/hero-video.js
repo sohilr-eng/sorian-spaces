@@ -40,6 +40,10 @@
   let rafPending = false;
   let loadTimeoutId = null;
 
+  // Dismiss loader once this many frames are available — the rest continue
+  // loading silently in the background while the user scrolls.
+  const MIN_FRAMES_TO_START = 30;
+
   // Lock scroll while loading
   document.body.style.overflow = 'hidden';
 
@@ -74,16 +78,16 @@
     const idx = i - 1;
     img.onload = img.onerror = () => {
       loadedCount++;
-      updateLoader(loadedCount / TOTAL_FRAMES);
-      if (loadedCount === TOTAL_FRAMES) onAllLoaded();
+      // Progress bar fills to 100% once MIN_FRAMES_TO_START are ready.
+      updateLoader(Math.min(loadedCount / MIN_FRAMES_TO_START, 1));
+      if (loadedCount >= MIN_FRAMES_TO_START) onAllLoaded();
     };
     img.src = FRAME_DIR + 'frame_' + String(i).padStart(4, '0') + '.jpg';
     images[idx] = img;
   }
 
-  // Fallback: dismiss loader after 15 s regardless of image load state.
-  // This prevents the site from hanging if frames are slow or unavailable.
-  loadTimeoutId = setTimeout(() => { onAllLoaded(); }, 15000);
+  // Hard fallback: dismiss after 8 s no matter what.
+  loadTimeoutId = setTimeout(() => { onAllLoaded(); }, 8000);
 
   // ── Draw a Frame (cover-fit) ───────────────────────
   function drawFrame(index) {
